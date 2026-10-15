@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Sparkles, Lightbulb, ExternalLink, Shield } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowUpRight } from 'lucide-react';
 import RiskBadge from './RiskBadge';
 
 export default function FindingCard({ finding }) {
@@ -7,25 +7,17 @@ export default function FindingCard({ finding }) {
 
   if (!finding) return null;
 
-  const categoryColor = {
-    Privacy: 'text-purple-400 bg-purple-950/60 border-purple-800/60',
-    Phishing: 'text-rose-400 bg-rose-950/60 border-rose-800/60',
-    'Website Security': 'text-cyan-400 bg-cyan-950/60 border-cyan-800/60',
-    'Legal Compliance': 'text-amber-400 bg-amber-950/60 border-amber-800/60',
-  }[finding.category] || 'text-slate-300 bg-slate-800 border-slate-700';
-
   return (
-    <div className="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-xl p-5 shadow-lg shadow-black/20 transition-all">
+    <div className="bg-neutral-900 border border-neutral-800 hover:border-neutral-700 rounded-lg p-4 transition-all">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 mb-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`text-xs px-2.5 py-0.5 rounded-md border font-mono font-medium ${categoryColor}`}>
+          <span className="text-[11px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 font-medium">
             {finding.category}
           </span>
           <RiskBadge level={finding.severity} size="sm" />
           {finding.source && (
-            <span className="text-xs text-slate-400 font-mono flex items-center gap-1 bg-slate-950/60 px-2 py-0.5 rounded border border-slate-800">
-              <ExternalLink className="w-3 h-3 text-cyan-500" />
+            <span className="text-[11px] text-neutral-400 font-mono">
               {finding.source}
             </span>
           )}
@@ -33,60 +25,57 @@ export default function FindingCard({ finding }) {
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
+          className="text-xs text-neutral-400 hover:text-neutral-200 flex items-center gap-1 transition-colors"
         >
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
 
-      {/* Title */}
-      <h3 className="text-base font-semibold text-slate-100 mb-3 flex items-center gap-2">
-        <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
+      {/* Finding Title */}
+      <h3 className="text-sm font-semibold text-neutral-100 mb-2">
         {finding.title}
       </h3>
 
       {expanded && (
-        <div className="space-y-3.5 pt-1">
-          {/* Evidence */}
+        <div className="space-y-3 pt-1 text-xs">
+          {/* Evidence snippet */}
           {finding.evidence && (
-            <div className="bg-slate-950/80 rounded-lg p-3.5 border-l-2 border-cyan-500 text-xs font-mono text-slate-300">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 block mb-1">
-                Detected Evidence / Text Excerpt:
+            <div className="bg-neutral-950 border-l-2 border-neutral-600 rounded-r p-3 font-mono text-[11px] text-neutral-300 leading-relaxed">
+              <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-sans font-medium mb-1">
+                Extracted Passage / Observation
               </span>
-              <p className="whitespace-pre-wrap leading-relaxed italic">
+              <p className="whitespace-pre-wrap italic text-neutral-300">
                 "{finding.evidence}"
               </p>
             </div>
           )}
 
-          {/* Plain English Explanation */}
-          <div className="bg-slate-800/60 rounded-lg p-3.5 border border-slate-700/60">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-300 mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              Plain English Analysis (Why it matters):
-            </div>
-            <p className="text-sm text-slate-200 leading-relaxed">
+          {/* Explanation */}
+          <div>
+            <span className="text-[11px] font-semibold text-neutral-400 block mb-1">
+              Assessment
+            </span>
+            <p className="text-neutral-200 leading-relaxed">
               {finding.explanation}
             </p>
           </div>
 
-          {/* Actionable Recommendation */}
-          <div className="bg-cyan-950/30 rounded-lg p-3.5 border border-cyan-900/50">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-300 mb-1">
-              <Lightbulb className="w-3.5 h-3.5 text-cyan-400" />
-              Recommended Action:
+          {/* Recommendation */}
+          {finding.recommendation && (
+            <div className="bg-neutral-800/40 border border-neutral-800 rounded p-3">
+              <span className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                Suggested Action
+              </span>
+              <p className="text-neutral-300 leading-relaxed">
+                {finding.recommendation}
+              </p>
             </div>
-            <p className="text-sm text-slate-200 leading-relaxed">
-              {finding.recommendation}
-            </p>
-          </div>
+          )}
 
-          {/* Confidence footer */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
-            <span>
-              Confidence Estimate: <strong className="text-slate-300">{Math.round((finding.confidence || 0.85) * 100)}%</strong>
-            </span>
-            <span className="text-slate-400">CyberGuard Rule & AI Engine</span>
+          {/* Footer source note */}
+          <div className="pt-2 border-t border-neutral-800/80 flex items-center justify-between text-[11px] text-neutral-400">
+            <span>Reference: {finding.source || 'Standard Security Baseline'}</span>
+            <span className="text-neutral-400">Verified Rule</span>
           </div>
         </div>
       )}

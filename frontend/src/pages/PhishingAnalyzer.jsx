@@ -4,13 +4,8 @@ import {
   Upload,
   AlertTriangle,
   ShieldCheck,
-  ShieldAlert,
   Loader2,
-  ExternalLink,
-  Link2,
-  FileCheck,
-  Sparkles,
-  Info
+  Link2
 } from 'lucide-react';
 import { api } from '../services/api';
 import FindingCard from '../components/FindingCard';
@@ -19,47 +14,46 @@ import PdfExportButton from '../components/PdfExportButton';
 
 const SAMPLE_EMAILS = {
   bank_phish: {
-    title: 'Chase Bank Impersonation (High Risk)',
-    sender: 'Chase Security Alert <no-reply@chase-account-update.xyz>',
+    title: 'Bank Verification Notice',
+    sender: 'Chase Support <no-reply@chase-account-update.xyz>',
     replyTo: 'harvester-inbox@mail-server.top',
-    subject: 'URGENT: Unauthorized Transaction Detected - Action Required Within 24 Hours',
+    subject: 'Action Required: Verify Account Access Within 24 Hours',
     body: `Dear Chase Customer,
 
-We have detected suspicious and unauthorized activity on your checking account ending in #4091. For your security, access has been temporarily restricted.
+We have detected unusual activity on your checking account. For your protection, account access has been temporarily restricted.
 
-Immediate action is required: Failure to verify your login credentials and billing details within 24 hours will result in permanent account termination.
+Immediate action is required: Failure to verify your login credentials within 24 hours will result in permanent account suspension.
 
-Please log in immediately to verify your identity:
+Please verify your identity using the link below:
 http://chase-security-verify.xyz/login.php
 
 Thank you,
-Chase Fraud Prevention Department`,
+Chase Security Team`,
   },
   ceo_giftcard: {
-    title: 'Executive Wire / Gift Card Fraud (High Risk)',
+    title: 'Executive Wire / Gift Card Prompt',
     sender: 'Tim Cook <ceo.office.apple@company-executives.click>',
     replyTo: 'personal.timcook42@gmail.com',
     subject: 'Urgent task - Are you available right now?',
     body: `Hi,
 
-I am currently in an urgent offsite board meeting and cannot take calls. I need you to handle a confidential task immediately. 
+I am currently in an offsite meeting and cannot take calls. I need you to handle a confidential task immediately. 
 
 Please purchase 5 Apple Gift Cards of $200 each and email me the photos of the redemption codes on the back right away. I will reimburse you by tomorrow morning through payroll.
 
 Treat this with utmost urgency and discretion.
 
 Best regards,
-Tim Cook
-Chief Executive Officer`,
+Tim Cook`,
   },
   legit_notice: {
-    title: 'GitHub Security Alert (Legitimate / Safe)',
+    title: 'GitHub Security Notification',
     sender: 'GitHub <support@github.com>',
     replyTo: 'support@github.com',
     subject: '[GitHub] A new personal access token was generated',
     body: `Hi developer,
 
-We wanted to let you know that a new personal access token (classic) was recently created on your GitHub account.
+We wanted to let you know that a new personal access token was recently created on your GitHub account.
 
 Token name: dev-laptop-cli
 Created on: October 15, 2026
@@ -139,161 +133,151 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
   const inspectedUrls = meta.inspected_urls || [];
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Module Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-rose-950/80 border border-rose-800 flex items-center justify-center text-rose-400 shadow-md shadow-rose-950/50">
-              <Mail className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-rose-400 bg-rose-950 px-2 py-0.5 rounded border border-rose-800">
-                  MODULE 02
-                </span>
-                <h1 className="text-xl font-bold text-white">Email Phishing & Threat Analyzer</h1>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Inspect sender authenticity, header mismatches, spoofed display names, deceptive hyperlinks, and psychological coercion triggers.
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-white tracking-tight">
+            Email Phishing Analyzer
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1">
+            Analyze sender headers, deceptive hyperlinks, brand impersonation, and urgency triggers.
+          </p>
+        </div>
 
-          {/* Presets */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium mr-1">Load Presets:</span>
-            <button
-              onClick={() => applyPreset('bank_phish')}
-              className="px-2.5 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/60 text-rose-300 border border-rose-800/80 text-xs transition-colors"
-            >
-              Fake Bank Alert
-            </button>
-            <button
-              onClick={() => applyPreset('ceo_giftcard')}
-              className="px-2.5 py-1 rounded-lg bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-800/80 text-xs transition-colors"
-            >
-              CEO Gift Card Scam
-            </button>
-            <button
-              onClick={() => applyPreset('legit_notice')}
-              className="px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/80 text-xs transition-colors"
-            >
-              Legitimate Notice
-            </button>
-          </div>
+        {/* Presets */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-neutral-400 mr-1">Presets:</span>
+          <button
+            onClick={() => applyPreset('bank_phish')}
+            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+          >
+            Bank Alert
+          </button>
+          <button
+            onClick={() => applyPreset('ceo_giftcard')}
+            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+          >
+            CEO Gift Card
+          </button>
+          <button
+            onClick={() => applyPreset('legit_notice')}
+            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+          >
+            Legitimate Alert
+          </button>
         </div>
       </div>
 
-      {/* Input Form */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex items-center gap-2 mb-5 border-b border-slate-800 pb-4">
+      {/* Input Box */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5">
+        <div className="flex items-center gap-2 mb-4 border-b border-neutral-800 pb-3">
           <button
             onClick={() => setMode('fields')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
               mode === 'fields'
-                ? 'bg-rose-950 text-rose-400 border border-rose-800'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-neutral-800 text-white'
+                : 'text-neutral-400 hover:text-neutral-200'
             }`}
           >
             <Mail className="w-3.5 h-3.5" />
-            <span>Email Header & Content</span>
+            <span>Email Headers & Text</span>
           </button>
           <button
             onClick={() => setMode('eml')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
               mode === 'eml'
-                ? 'bg-rose-950 text-rose-400 border border-rose-800'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-neutral-800 text-white'
+                : 'text-neutral-400 hover:text-neutral-200'
             }`}
           >
             <Upload className="w-3.5 h-3.5" />
-            <span>Upload .EML / Raw File</span>
+            <span>Upload .EML File</span>
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 rounded-lg text-xs text-rose-300">
+          <div className="mb-3 p-2.5 bg-red-950/40 border border-red-800/60 rounded text-xs text-red-300">
             {error}
           </div>
         )}
 
         {mode === 'fields' ? (
-          <form onSubmit={handleAnalyze} className="space-y-4">
+          <form onSubmit={handleAnalyze} className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  From (Sender Header):
+                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                  From (Sender Header)
                 </label>
                 <input
                   type="text"
-                  placeholder='e.g. PayPal Support <support@paypaI-updates.com>'
+                  placeholder='e.g. PayPal Support <support@paypal-security.xyz>'
                   value={sender}
                   onChange={(e) => setSender(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500 font-mono"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Reply-To (Optional Header):
+                <label className="block text-xs font-medium text-neutral-300 mb-1">
+                  Reply-To (Optional Header)
                 </label>
                 <input
                   type="text"
-                  placeholder='e.g. responses@malicious-box.xyz'
+                  placeholder='e.g. response-inbox@mail-server.top'
                   value={replyTo}
                   onChange={(e) => setReplyTo(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500 font-mono"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Subject Line:
+              <label className="block text-xs font-medium text-neutral-300 mb-1">
+                Subject Line
               </label>
               <input
                 type="text"
-                placeholder="e.g. Urgent Notice: Your account will be closed in 24 hours"
+                placeholder="e.g. Notice: Please verify account credentials"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Email Body Text (or HTML):
+              <label className="block text-xs font-medium text-neutral-300 mb-1">
+                Message Body
               </label>
               <textarea
                 rows={7}
-                placeholder="Paste the email body content or full raw message text..."
+                placeholder="Paste the email body or full raw message text..."
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-100 focus:outline-none focus:border-rose-500 font-mono leading-relaxed"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-md p-3 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono leading-relaxed"
               />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-1">
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-xs rounded-lg transition-all shadow-md shadow-rose-950/60 flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-                <span>{loading ? 'Inspecting Threat Vectors...' : 'Analyze Email For Phishing'}</span>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                <span>{loading ? 'Inspecting indicators...' : 'Inspect Email'}</span>
               </button>
             </div>
           </form>
         ) : (
           <form onSubmit={handleUploadEml} className="space-y-4">
-            <div className="border-2 border-dashed border-slate-800 hover:border-rose-700/70 rounded-xl p-8 text-center transition-colors">
-              <Upload className="w-8 h-8 mx-auto text-slate-500 mb-2" />
-              <p className="text-xs text-slate-300 mb-1 font-medium">
+            <div className="border border-dashed border-neutral-800 rounded-lg p-8 text-center">
+              <Upload className="w-6 h-6 mx-auto text-neutral-500 mb-2" />
+              <p className="text-xs text-neutral-300 mb-1 font-medium">
                 {selectedFile ? selectedFile.name : 'Select a raw .EML or .MSG email export file'}
               </p>
-              <p className="text-[11px] text-slate-500 mb-4">
-                CyberGuard extracts headers, MIME attachments, and body parts safely without rendering active scripts.
+              <p className="text-[11px] text-neutral-500 mb-3">
+                Parses RFC 822 headers and MIME boundaries without executing scripts.
               </p>
               <input
                 type="file"
@@ -304,7 +288,7 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
               />
               <label
                 htmlFor="eml-file"
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg cursor-pointer transition-colors inline-block"
+                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded cursor-pointer transition-colors inline-block"
               >
                 Browse .EML Files
               </label>
@@ -314,10 +298,10 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
               <button
                 type="submit"
                 disabled={loading || !selectedFile}
-                className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-xs rounded-lg transition-all shadow-md shadow-rose-950/60 flex items-center gap-2 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-                <span>{loading ? 'Parsing RFC 822 EML...' : 'Upload & Analyze .EML'}</span>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                <span>{loading ? 'Parsing message...' : 'Upload & Analyze .EML'}</span>
               </button>
             </div>
           </form>
@@ -326,49 +310,48 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
 
       {/* Results Section */}
       {result && (
-        <div className="space-y-6">
-          {/* Result Banner */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-5">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center font-mono">
-                <span className="text-2xl font-bold text-white">{result.overall_risk_score}</span>
-                <span className="text-[9px] text-slate-400 uppercase">Score / 100</span>
+              <div className="w-12 h-12 rounded bg-neutral-950 border border-neutral-800 flex flex-col items-center justify-center font-mono">
+                <span className="text-xl font-bold text-white">{result.overall_risk_score}</span>
+                <span className="text-[8px] text-neutral-400 uppercase">Score</span>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-bold text-white">{result.target || 'Email Phishing Assessment'}</h2>
-                  <RiskBadge level={result.risk_level} size="md" />
+                  <h2 className="text-base font-semibold text-white">{result.target || 'Email Analysis Result'}</h2>
+                  <RiskBadge level={result.risk_level} size="sm" />
                 </div>
-                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                <p className="text-xs text-neutral-300 max-w-2xl leading-relaxed">
                   {result.summary}
                 </p>
               </div>
             </div>
 
-            <PdfExportButton scanId={result.id} label="Download Threat PDF" />
+            <PdfExportButton scanId={result.id} label="Export PDF" />
           </div>
 
-          {/* Hyperlinks Inspected Table (if any) */}
+          {/* Hyperlinks Inspected Table */}
           {inspectedUrls.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2 mb-3">
-                <Link2 className="w-4 h-4 text-cyan-400" />
-                <span>Extracted Hyperlinks Safely Inspected ({inspectedUrls.length})</span>
+            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+              <h3 className="text-xs font-semibold text-neutral-200 flex items-center gap-2 mb-2">
+                <Link2 className="w-4 h-4 text-neutral-400" />
+                <span>Extracted Hyperlink Destinations ({inspectedUrls.length})</span>
               </h3>
-              <p className="text-[11px] text-slate-400 mb-3">
-                Notice: CyberGuard does not open email links automatically to prevent tracking beacon activation.
+              <p className="text-[11px] text-neutral-400 mb-3">
+                Links are evaluated passively without making outbound connections.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                  <thead className="bg-neutral-950 text-neutral-400 text-[10px] uppercase border-b border-neutral-800">
                     <tr>
-                      <th className="py-2 px-3">Inspected URL Target</th>
+                      <th className="py-2 px-3">Target URL</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-neutral-800/80">
                     {inspectedUrls.map((u, i) => (
-                      <tr key={i} className="hover:bg-slate-800/30">
-                        <td className="py-2 px-3 text-cyan-300 truncate max-w-md">{u}</td>
+                      <tr key={i} className="hover:bg-neutral-800/40">
+                        <td className="py-2 px-3 text-neutral-300 truncate max-w-md">{u}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -377,20 +360,19 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
             </div>
           )}
 
-          {/* Findings Cards */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              <span>Phishing Indicators & Attack Vectors ({result.findings.length})</span>
+          {/* Findings */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-neutral-100 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-neutral-400" />
+              <span>Warning Signs & Indicators ({result.findings.length})</span>
             </h3>
 
             {result.findings.length === 0 ? (
-              <div className="bg-slate-900/60 border border-emerald-900/60 rounded-xl p-8 text-center text-xs text-emerald-400">
-                <ShieldCheck className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
-                No typical phishing markers, deceptive domains, or urgent demands detected in this email.
+              <div className="bg-neutral-900/60 border border-neutral-800 rounded-lg p-6 text-center text-xs text-neutral-400">
+                No typical phishing markers, sender spoofing, or deceptive links detected.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {result.findings.map((f, i) => (
                   <FindingCard key={f.id || i} finding={f} />
                 ))}

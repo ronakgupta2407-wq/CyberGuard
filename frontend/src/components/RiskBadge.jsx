@@ -1,41 +1,40 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, AlertCircle, ShieldAlert, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 
-export default function RiskBadge({ level = 'Low', size = 'md', showIcon = true }) {
+export default function RiskBadge({ level = 'Low', size = 'md' }) {
   const norm = String(level).toLowerCase();
 
-  let colorClasses = 'bg-slate-800 text-slate-300 border-slate-700';
-  let Icon = HelpCircle;
+  let badgeStyle = 'bg-neutral-800/80 text-neutral-300 border-neutral-700/80';
+  let dotColor = 'bg-neutral-400';
 
   if (norm === 'critical' || norm === 'failed' || norm === 'conflicting') {
-    colorClasses = 'bg-rose-950/80 text-rose-400 border-rose-800/80 shadow-sm shadow-rose-950';
-    Icon = ShieldAlert;
+    badgeStyle = 'bg-red-500/10 text-red-400 border-red-500/20';
+    dotColor = 'bg-red-500';
   } else if (norm === 'high') {
-    colorClasses = 'bg-orange-950/80 text-orange-400 border-orange-800/80 shadow-sm shadow-orange-950';
-    Icon = AlertTriangle;
+    badgeStyle = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+    dotColor = 'bg-orange-500';
   } else if (norm === 'medium' || norm === 'warning' || norm === 'potentially missing' || norm === 'missing') {
-    colorClasses = 'bg-amber-950/80 text-amber-400 border-amber-800/80 shadow-sm shadow-amber-950';
-    Icon = AlertCircle;
+    badgeStyle = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    dotColor = 'bg-amber-500';
   } else if (norm === 'low' || norm === 'informational') {
-    colorClasses = 'bg-sky-950/80 text-sky-400 border-sky-800/80';
-    Icon = ShieldCheck;
+    badgeStyle = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    dotColor = 'bg-blue-500';
   } else if (norm === 'safe' || norm === 'passed' || norm === 'supported') {
-    colorClasses = 'bg-emerald-950/80 text-emerald-400 border-emerald-800/80 shadow-sm shadow-emerald-950';
-    Icon = CheckCircle2;
+    badgeStyle = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    dotColor = 'bg-emerald-500';
   } else if (norm === 'inconclusive' || norm === 'could_not_complete') {
-    colorClasses = 'bg-slate-800/80 text-slate-400 border-slate-700';
-    Icon = HelpCircle;
+    badgeStyle = 'bg-neutral-800/70 text-neutral-400 border-neutral-700/60';
+    dotColor = 'bg-neutral-500';
   }
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 gap-1',
+    sm: 'text-[11px] px-2 py-0.5 gap-1.5',
     md: 'text-xs px-2.5 py-1 gap-1.5',
-    lg: 'text-sm px-3.5 py-1.5 gap-2 font-semibold',
+    lg: 'text-xs px-3 py-1.5 gap-2 font-medium',
   }[size] || 'text-xs px-2.5 py-1 gap-1.5';
 
   return (
-    <span className={`inline-flex items-center rounded-full border font-medium ${sizeClasses} ${colorClasses} tracking-wide transition-all`}>
-      {showIcon && <Icon className={size === 'lg' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />}
+    <span className={`inline-flex items-center rounded-md border font-medium ${sizeClasses} ${badgeStyle} shrink-0`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
       <span>{level}</span>
     </span>
   );

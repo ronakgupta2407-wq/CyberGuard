@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  History,
   GitCompare,
-  Download,
   Trash2,
   Eye,
   Filter,
   Search,
   RefreshCw,
-  FileText,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 import { api } from '../services/api';
 import RiskBadge from '../components/RiskBadge';
@@ -41,7 +38,7 @@ export default function ScanHistory({ onSelectScan }) {
   };
 
   const handleDelete = async (scanId) => {
-    if (!window.confirm('Are you sure you want to delete this scan record?')) return;
+    if (!window.confirm('Delete this audit log record?')) return;
     try {
       await api.deleteScan(scanId);
       setScans(scans.filter((s) => s.id !== scanId));
@@ -60,70 +57,59 @@ export default function ScanHistory({ onSelectScan }) {
   return (
     <div className="space-y-6 pb-16">
       {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-cyan-950/80 border border-cyan-800 flex items-center justify-center text-cyan-400 shadow-md shadow-cyan-950/50">
-              <History className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
-                  MODULE 06
-                </span>
-                <h1 className="text-xl font-bold text-white">Reports, Audit History & Comparison</h1>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Access past analyses, download forensic PDF reports, and run side-by-side diff comparisons across scans.
-              </p>
-            </div>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-white tracking-tight">
+            Audit Log & History
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1">
+            Access past assessments, export PDF reports, and compare differential metrics between scans.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setSelectedScanForCompare(scans[0]?.id || null);
-                setCompareOpen(true);
-              }}
-              disabled={scans.length < 2}
-              className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white font-semibold text-xs rounded-lg transition-all shadow-md shadow-cyan-950 flex items-center gap-2 disabled:opacity-50"
-            >
-              <GitCompare className="w-4 h-4" />
-              <span>Side-by-Side Compare</span>
-            </button>
-            <button
-              onClick={loadScans}
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
-              title="Refresh scan history"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setSelectedScanForCompare(scans[0]?.id || null);
+              setCompareOpen(true);
+            }}
+            disabled={scans.length < 2}
+            className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+            <span>Compare Audits</span>
+          </button>
+          <button
+            onClick={loadScans}
+            className="p-1.5 rounded-md bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 transition-colors"
+            title="Refresh list"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-        {/* Module Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-slate-400 mr-1 flex items-center gap-1">
-            <Filter className="w-3.5 h-3.5" /> Filter:
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-xs text-neutral-400 mr-1 flex items-center gap-1">
+            <Filter className="w-3 h-3" /> Filter:
           </span>
           {[
-            { id: 'all', label: 'All Modules' },
-            { id: 'tc', label: 'Terms & Conditions' },
-            { id: 'phishing', label: 'Email Phishing' },
-            { id: 'website', label: 'Website Security' },
+            { id: 'all', label: 'All' },
+            { id: 'tc', label: 'Terms' },
+            { id: 'phishing', label: 'Phishing' },
+            { id: 'website', label: 'Website' },
             { id: 'compliance', label: 'Compliance' },
-            { id: 'unified', label: 'Unified Audits' },
+            { id: 'unified', label: 'Unified' },
           ].map((item) => (
             <button
               key={item.id}
               onClick={() => setModuleFilter(item.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                 moduleFilter === item.id
-                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-neutral-800 text-white'
+                  : 'bg-neutral-950 text-neutral-400 hover:text-neutral-200 border border-neutral-800'
               }`}
             >
               {item.label}
@@ -131,42 +117,41 @@ export default function ScanHistory({ onSelectScan }) {
           ))}
         </div>
 
-        {/* Search Input */}
-        <div className="relative min-w-[220px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+        <div className="relative min-w-[200px]">
+          <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-2.5 top-2" />
           <input
             type="text"
             placeholder="Search target or summary..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+            className="w-full bg-neutral-950 border border-neutral-800 rounded-md pl-8 pr-3 py-1 text-xs text-neutral-200 focus:outline-none focus:border-neutral-600"
           />
         </div>
       </div>
 
-      {/* History Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      {/* Table */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
         {loading ? (
-          <div className="text-center py-16 text-xs text-slate-400">Loading audit history...</div>
+          <div className="text-center py-12 text-xs text-neutral-400">Loading audit history...</div>
         ) : filteredScans.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <FileText className="w-10 h-10 mx-auto text-slate-700 mb-2" />
-            <p className="text-xs">No scan records match your filter criteria.</p>
+          <div className="text-center py-12 text-neutral-400">
+            <FileText className="w-8 h-8 mx-auto text-neutral-600 mb-2" />
+            <p className="text-xs">No audit records match the current filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+              <thead className="bg-neutral-950/70 text-neutral-400 text-[11px] font-medium border-b border-neutral-800">
                 <tr>
-                  <th className="py-3 px-4">Module</th>
-                  <th className="py-3 px-4">Target Artifact / Scope</th>
-                  <th className="py-3 px-4">Risk Rating</th>
-                  <th className="py-3 px-4">Key Observations</th>
-                  <th className="py-3 px-4">Scan Date</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-4">Type</th>
+                  <th className="py-2.5 px-4">Target Scope</th>
+                  <th className="py-2.5 px-4">Risk Level</th>
+                  <th className="py-2.5 px-4">Summary</th>
+                  <th className="py-2.5 px-4">Timestamp</th>
+                  <th className="py-2.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-neutral-800/80">
                 {filteredScans.map((s) => {
                   const dateStr = s.created_at
                     ? new Date(s.created_at).toLocaleDateString(undefined, {
@@ -177,44 +162,44 @@ export default function ScanHistory({ onSelectScan }) {
                     : 'Recent';
 
                   return (
-                    <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3.5 px-4 font-mono">
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-cyan-400 font-bold uppercase">
-                          {s.module_type}
+                    <tr key={s.id} className="hover:bg-neutral-800/40 transition-colors">
+                      <td className="py-2.5 px-4">
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 font-medium">
+                          {s.module_type.toUpperCase()}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-100 max-w-[220px] truncate">
+                      <td className="py-2.5 px-4 font-medium text-neutral-200 max-w-[200px] truncate">
                         {s.target || 'Digital Target'}
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-2.5 px-4">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-200">{s.overall_risk_score}</span>
+                          <span className="font-mono text-neutral-300 font-medium">{s.overall_risk_score}</span>
                           <RiskBadge level={s.risk_level} size="sm" />
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400 max-w-[280px] truncate">
+                      <td className="py-2.5 px-4 text-neutral-400 max-w-[280px] truncate">
                         {s.summary}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+                      <td className="py-2.5 px-4 text-neutral-400 text-[11px] whitespace-nowrap">
                         {dateStr}
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-2.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={async () => {
                               const full = await api.getScanById(s.id);
                               onSelectScan(full);
                             }}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-                            title="View Full Findings & Dossier"
+                            className="p-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition-colors"
+                            title="View Full Findings"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <PdfExportButton scanId={s.id} variant="outline" label="PDF" />
                           <button
                             onClick={() => handleDelete(s.id)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 transition-colors"
-                            title="Delete Scan Record"
+                            className="p-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-red-400 transition-colors"
+                            title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -229,7 +214,6 @@ export default function ScanHistory({ onSelectScan }) {
         )}
       </div>
 
-      {/* Side-by-Side Comparison Modal */}
       <CompareModal
         isOpen={compareOpen}
         onClose={() => setCompareOpen(false)}

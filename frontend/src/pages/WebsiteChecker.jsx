@@ -2,15 +2,9 @@ import React, { useState } from 'react';
 import {
   Globe,
   Lock,
-  ShieldCheck,
-  ShieldAlert,
   Loader2,
   CheckCircle2,
-  XCircle,
   AlertCircle,
-  Server,
-  KeyRound,
-  ExternalLink,
   Shield
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -19,10 +13,10 @@ import RiskBadge from '../components/RiskBadge';
 import PdfExportButton from '../components/PdfExportButton';
 
 const SAMPLE_WEBSITES = [
-  { name: 'github.com (Modern Security)', url: 'https://github.com' },
-  { name: 'google.com (Enterprise TLS)', url: 'https://google.com' },
-  { name: 'cloudflare.com (Strict HSTS & CSP)', url: 'https://cloudflare.com' },
-  { name: 'badssl.com (Test Expired TLS)', url: 'https://expired.badssl.com' },
+  { name: 'github.com', url: 'https://github.com' },
+  { name: 'cloudflare.com', url: 'https://cloudflare.com' },
+  { name: 'google.com', url: 'https://google.com' },
+  { name: 'badssl.com (Expired TLS)', url: 'https://expired.badssl.com' },
 ];
 
 export default function WebsiteChecker({ onScanCompleted }) {
@@ -44,7 +38,7 @@ export default function WebsiteChecker({ onScanCompleted }) {
       setResult(scan);
       if (onScanCompleted) onScanCompleted(scan);
     } catch (err) {
-      setError(err.message || 'Website security audit failed');
+      setError(err.message || 'Website check failed');
     } finally {
       setLoading(false);
     }
@@ -55,150 +49,140 @@ export default function WebsiteChecker({ onScanCompleted }) {
   const checks = meta.technical_checks || [];
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Module Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-sky-950/80 border border-sky-800 flex items-center justify-center text-sky-400 shadow-md shadow-sky-950/50">
-              <Globe className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">
-                  MODULE 03
-                </span>
-                <h1 className="text-xl font-bold text-white">Website Security & SSL/TLS Checker</h1>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                Inspect TLS certificate validity, HTTPS redirection, HSTS, CSP, X-Frame-Options, cookie security, and SSRF restrictions.
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6 pb-16">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-5">
+        <div>
+          <h1 className="text-xl font-semibold text-white tracking-tight">
+            Website Security Checker
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1">
+            Audit TLS/SSL certificate validity, automatic HTTPS redirection, and security headers.
+          </p>
+        </div>
 
-          {/* Quick Presets */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium mr-1">Presets:</span>
-            {SAMPLE_WEBSITES.map((w, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  setTargetUrl(w.url);
-                  setError('');
-                }}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs transition-colors"
-              >
-                {w.name}
-              </button>
-            ))}
-          </div>
+        {/* Presets */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-neutral-400 mr-1">Presets:</span>
+          {SAMPLE_WEBSITES.map((w, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setTargetUrl(w.url);
+                setError('');
+              }}
+              className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+            >
+              {w.name}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Input Section */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
+      {/* Input Box */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-bold text-slate-200">Inspect Target Hostname</span>
+            <Lock className="w-4 h-4 text-neutral-400" />
+            <span className="text-xs font-semibold text-neutral-200">Inspect Target Hostname</span>
           </div>
 
-          {/* SSRF Protection Pill */}
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 text-[10px] font-mono font-semibold">
-            <Shield className="w-3 h-3" />
-            <span>SSRF Guard: RFC1918 & Loopback Blocked</span>
+          {/* SSRF Protection Badge */}
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 text-[11px] font-mono">
+            <Shield className="w-3 h-3 text-neutral-400" />
+            <span>SSRF Protected (RFC1918 Blocked)</span>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 rounded-lg text-xs text-rose-300 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="mb-3 p-2.5 bg-red-950/40 border border-red-800/60 rounded text-xs text-red-300 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleCheck} className="flex flex-col sm:flex-row gap-3">
+        <form onSubmit={handleCheck} className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
-            <Globe className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Globe className="w-4 h-4 text-neutral-500 absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="e.g. https://github.com or example.com"
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500 font-mono"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-md pl-9 pr-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white font-semibold text-xs rounded-lg transition-all shadow-md shadow-sky-950/60 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-            <span>{loading ? 'Inspecting Infrastructure...' : 'Scan Website'}</span>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            <span>{loading ? 'Checking...' : 'Check Security'}</span>
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-500 mt-3">
-          Note: HTTPS alone does not prove that a website is trustworthy; TLS encryption must be coupled with strict transport policies and application hygiene.
+        <p className="text-[11px] text-neutral-500 mt-2">
+          Notice: HTTPS encryption alone does not prove that a website is trustworthy; operational hygiene and transport headers are required.
         </p>
       </div>
 
       {/* Results Section */}
       {result && (
-        <div className="space-y-6">
-          {/* Result Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-5">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center font-mono">
-                <span className="text-2xl font-bold text-white">{result.overall_risk_score}</span>
-                <span className="text-[9px] text-slate-400 uppercase">Score / 100</span>
+              <div className="w-12 h-12 rounded bg-neutral-950 border border-neutral-800 flex flex-col items-center justify-center font-mono">
+                <span className="text-xl font-bold text-white">{result.overall_risk_score}</span>
+                <span className="text-[8px] text-neutral-400 uppercase">Score</span>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-bold text-white font-mono">{meta.hostname || result.target}</h2>
-                  <RiskBadge level={result.risk_level} size="md" />
+                  <h2 className="text-base font-semibold text-white font-mono">{meta.hostname || result.target}</h2>
+                  <RiskBadge level={result.risk_level} size="sm" />
                 </div>
-                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                <p className="text-xs text-neutral-300 max-w-2xl leading-relaxed">
                   {result.summary}
                 </p>
                 {meta.resolved_ip && (
-                  <div className="text-[11px] font-mono text-cyan-400 mt-1">
-                    Resolved Public IP: <strong>{meta.resolved_ip}</strong> (Verified Safe)
+                  <div className="text-[11px] font-mono text-neutral-400 mt-1">
+                    Resolved IP: {meta.resolved_ip}
                   </div>
                 )}
               </div>
             </div>
 
-            <PdfExportButton scanId={result.id} label="Download Security PDF" />
+            <PdfExportButton scanId={result.id} label="Export PDF" />
           </div>
 
-          {/* Technical Checks Grid */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-xs font-bold text-slate-200 uppercase font-mono tracking-wider mb-4 flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-sky-400" />
-              <span>Technical Security Indicator Matrix</span>
-            </h3>
+          {/* Technical Checks Table */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
+            <div className="p-4 border-b border-neutral-800">
+              <h3 className="text-xs font-semibold text-neutral-200 uppercase tracking-wider">
+                Technical Security Indicators
+              </h3>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+                <thead className="bg-neutral-950/70 text-neutral-400 text-[11px] font-medium border-b border-neutral-800">
                   <tr>
-                    <th className="py-2.5 px-4">Security Indicator</th>
-                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4">Indicator</th>
+                    <th className="py-2.5 px-4">Result</th>
                     <th className="py-2.5 px-4">Technical Observations</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-neutral-800/80">
                   {checks.map((chk, i) => (
-                    <tr key={i} className="hover:bg-slate-800/40">
-                      <td className="py-3 px-4 font-semibold text-slate-200">
+                    <tr key={i} className="hover:bg-neutral-800/40">
+                      <td className="py-2.5 px-4 font-medium text-neutral-200">
                         {chk.name}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-4">
                         <RiskBadge level={chk.status} size="sm" />
                       </td>
-                      <td className="py-3 px-4 text-slate-300 font-mono text-[11px]">
+                      <td className="py-2.5 px-4 text-neutral-400 font-mono text-[11px]">
                         {chk.details}
                       </td>
                     </tr>
@@ -208,48 +192,46 @@ export default function WebsiteChecker({ onScanCompleted }) {
             </div>
           </div>
 
-          {/* TLS Certificate Deep-Dive (if present) */}
+          {/* TLS Certificate Summary */}
           {tls.status === 'passed' && (
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5">
-              <h3 className="text-xs font-bold text-slate-200 mb-3 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-emerald-400" />
-                <span>TLS Certificate Technical Profile</span>
+            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+              <h3 className="text-xs font-semibold text-neutral-200 mb-2.5 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Certificate Technical Profile</span>
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-400 block mb-1">Negotiated Protocol</span>
-                  <span className="font-mono text-emerald-400 font-bold">{tls.tls_version || 'TLS 1.3'}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block mb-0.5">TLS Protocol</span>
+                  <span className="font-mono text-neutral-200 font-medium">{tls.tls_version || 'TLS 1.3'}</span>
                 </div>
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-400 block mb-1">Certificate Issuer</span>
-                  <span className="font-mono text-slate-200 truncate block">{tls.issuer || 'Trusted CA'}</span>
+                <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block mb-0.5">Certificate Issuer</span>
+                  <span className="font-mono text-neutral-200 truncate block">{tls.issuer || 'Trusted CA'}</span>
                 </div>
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-400 block mb-1">Validity Remaining</span>
-                  <span className="font-mono text-cyan-400 font-bold">{tls.days_remaining} Days</span>
+                <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block mb-0.5">Validity Remaining</span>
+                  <span className="font-mono text-neutral-200 font-medium">{tls.days_remaining} Days</span>
                 </div>
-                <div className="bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-                  <span className="text-[10px] text-slate-400 block mb-1">Cipher Suite</span>
-                  <span className="font-mono text-slate-300 text-[10px] truncate block">{tls.cipher || 'AEAD-GCM'}</span>
+                <div className="bg-neutral-950 p-2.5 rounded border border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 block mb-0.5">Cipher</span>
+                  <span className="font-mono text-neutral-300 text-[10px] truncate block">{tls.cipher || 'Standard'}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Actionable Findings */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-sky-400" />
-              <span>Remediation & Hardening Guidance ({result.findings.length})</span>
+          {/* Remediation Findings */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-neutral-100">
+              Hardening Recommendations ({result.findings.length})
             </h3>
 
             {result.findings.length === 0 ? (
-              <div className="bg-slate-900/60 border border-emerald-900/60 rounded-xl p-8 text-center text-xs text-emerald-400">
-                <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
-                Excellent hygiene! All inspected transport encryption and HTTP security headers passed cleanly.
+              <div className="bg-neutral-900/60 border border-neutral-800 rounded-lg p-6 text-center text-xs text-neutral-400">
+                All inspected transport encryption and HTTP security headers passed cleanly.
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {result.findings.map((f, i) => (
                   <FindingCard key={f.id || i} finding={f} />
                 ))}

@@ -78,27 +78,20 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/90 py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <footer className="border-t border-neutral-900 bg-neutral-950 py-5 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-cyan-950 border border-cyan-800 flex items-center justify-center text-cyan-400 font-bold text-[10px]">
-              CG
-            </div>
-            <span>
-              <strong>CyberGuard</strong> — AI-Powered Digital, Legal & Privacy Risk Platform
-            </span>
+            <span className="font-semibold text-neutral-300">CyberGuard</span>
+            <span>—</span>
+            <span>Digital Security & Legal Risk Platform</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
-            <span className="flex items-center gap-1 text-slate-400">
-              <Cpu className="w-3.5 h-3.5 text-purple-400" /> Python + FastAPI
-            </span>
-            <span className="flex items-center gap-1 text-slate-400">
-              <Database className="w-3.5 h-3.5 text-cyan-400" /> SQLite Database
-            </span>
-            <span className="flex items-center gap-1 text-slate-400">
-              <FileCheck className="w-3.5 h-3.5 text-emerald-400" /> ReportLab PDF
-            </span>
+          <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+            <span>FastAPI Backend</span>
+            <span>•</span>
+            <span>SQLite Storage</span>
+            <span>•</span>
+            <span>ReportLab PDF Engine</span>
           </div>
         </div>
       </footer>

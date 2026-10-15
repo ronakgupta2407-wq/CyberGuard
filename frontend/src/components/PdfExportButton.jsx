@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Download, FileText, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function PdfExportButton({ scanId, variant = 'primary', label = 'Export PDF Report' }) {
+export default function PdfExportButton({ scanId, variant = 'primary', label = 'Export PDF' }) {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -41,20 +41,20 @@ export default function PdfExportButton({ scanId, variant = 'primary', label = '
     <button
       onClick={handleDownload}
       disabled={downloading}
-      className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-xs tracking-wide transition-all ${
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
         isOutline
-          ? 'bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-800/60 hover:border-cyan-500'
-          : 'bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white shadow-md shadow-cyan-950/50'
+          ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700'
+          : 'bg-neutral-100 hover:bg-white text-neutral-900 font-semibold shadow-sm'
       } disabled:opacity-50 disabled:cursor-not-allowed`}
-      title="Download comprehensive ReportLab PDF risk dossier"
+      title="Download PDF report"
     >
       {downloading ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
       ) : (
         <FileText className="w-3.5 h-3.5" />
       )}
-      <span>{downloading ? 'Generating PDF...' : label}</span>
-      <Download className="w-3 h-3 ml-0.5 opacity-70" />
+      <span>{downloading ? 'Preparing...' : label}</span>
+      <Download className="w-3 h-3 ml-0.5 opacity-60" />
     </button>
   );
 }
