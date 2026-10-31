@@ -49,6 +49,14 @@ class ScanResponse(BaseModel):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class KeyFindingResponse(BaseModel):
+    category: str = ""
+    severity: str
+    title: str
+    evidence: str = ""
+    explanation: str = ""
+    recommendation: str = ""
+
 class ScanSummaryResponse(BaseModel):
     id: str
     user_id: str
@@ -58,7 +66,9 @@ class ScanSummaryResponse(BaseModel):
     risk_level: str
     summary: str
     created_at: datetime
+    finding_count: int = 0
     finding_counts: Dict[str, int] = Field(default_factory=dict)
+    key_findings: List[KeyFindingResponse] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 # Module Request / Response schemas

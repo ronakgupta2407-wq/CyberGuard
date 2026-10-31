@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 from typing import Dict, Any, List
+from xml.sax.saxutils import escape
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -141,8 +142,82 @@ class ReportGenerator:
         elements.append(score_table)
         elements.append(Spacer(1, 14))
 
-        # 3. Findings Breakdown Summary Counts
+        # 3. Short assessment and detailed summary of the highest-priority issues
         findings = scan_data.get("findings", [])
+        module_names = {
+            "tc": "Terms of Service",
+            "phishing": "email",
+            "website": "website",
+            "compliance": "privacy policy",
+            "unified": "security audit",
+        }
+        module_name = module_names.get(str(scan_data.get("module_type", "")).lower(), "audit")
+        summary_style = ParagraphStyle(
+            "PlainSummary",
+            parent=body_style,
+            fontSize=9,
+            leading=13,
+            spaceAfter=5,
+        )
+        elements.append(Paragraph("Short summary", h2_style))
+        severity_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Informational": 4}
+        highest_finding = sorted(
+            findings,
+            key=lambda finding: severity_order.get(getattr(finding, "severity", ""), 5),
+        )[0] if findings else None
+        short_summary = (
+            f"{len(findings)} issue{'s' if len(findings) != 1 else ''} flagged in this "
+            f"{module_name}. Overall risk: {risk_level} ({score}/100)."
+        )
+        if highest_finding:
+            short_summary += (
+                f" Highest priority: {getattr(highest_finding, 'title', 'Risk finding')} "
+                f"({getattr(highest_finding, 'severity', 'Finding')})."
+            )
+        elements.append(Paragraph(
+            escape(short_summary),
+            summary_style,
+        ))
+        analysis_summary = str(scan_data.get("summary", "") or "").strip()
+        if analysis_summary:
+            elements.append(Paragraph(
+                f"<b>Analysis overview:</b> {escape(analysis_summary).replace(chr(10), '<br/>')}",
+                summary_style,
+            ))
+
+        key_findings = sorted(
+            findings,
+            key=lambda finding: severity_order.get(getattr(finding, "severity", ""), 5),
+        )[:3]
+        if key_findings:
+            elements.append(Paragraph("Detailed summary · highest priority findings", h2_style))
+            for finding in key_findings:
+                severity = escape(str(getattr(finding, "severity", "Finding")))
+                title = escape(str(getattr(finding, "title", "Risk finding")))
+                evidence = str(getattr(finding, "evidence", "") or "").strip()
+                explanation = str(getattr(finding, "explanation", "") or "").strip()
+                recommendation = str(getattr(finding, "recommendation", "") or "").strip()
+                summary_line = f"<b>{severity}: {title}</b>"
+                if evidence:
+                    summary_line += f"<br/><b>Evidence:</b> {escape(evidence).replace(chr(10), '<br/>')}"
+                if explanation:
+                    summary_line += f"<br/><b>Why it matters:</b> {escape(explanation).replace(chr(10), '<br/>')}"
+                if recommendation:
+                    summary_line += f"<br/><b>Recommended action:</b> {escape(recommendation).replace(chr(10), '<br/>')}"
+                elements.append(Paragraph(summary_line, summary_style))
+        else:
+            elements.append(Paragraph(
+                "No specific issues were flagged in this scan. The detailed findings section has no issues to list.",
+                summary_style,
+            ))
+        if len(findings) > len(key_findings):
+            elements.append(Paragraph(
+                f"The report also contains {len(findings) - len(key_findings)} additional findings.",
+                summary_style,
+            ))
+        elements.append(Spacer(1, 9))
+
+        # 4. Findings Breakdown Summary Counts
         crit_count = sum(1 for f in findings if getattr(f, "severity", "") == "Critical")
         high_count = sum(1 for f in findings if getattr(f, "severity", "") == "High")
         med_count = sum(1 for f in findings if getattr(f, "severity", "") == "Medium")
@@ -169,7 +244,7 @@ class ReportGenerator:
         elements.append(stats_table)
         elements.append(Spacer(1, 14))
 
-        # 4. Detailed Findings Table
+        # 5. Detailed Findings Table
         elements.append(Paragraph("Detailed Risk Findings & Evidence", h2_style))
 
         if not findings:
@@ -186,14 +261,19 @@ class ReportGenerator:
                 rec = getattr(f, "recommendation", "")
                 src = getattr(f, "source", "")
 
-                ev_snippet = f"<b>{title}</b><br/><font color='#64748b'>Evidence:</font> <i>{ev[:160]}...</i>" if len(ev) > 160 else f"<b>{title}</b><br/><font color='#64748b'>Evidence:</font> <i>{ev}</i>"
+                safe_title = escape(str(title))
+                safe_evidence = escape(str(ev))
+                safe_source = escape(str(src))
+                safe_exp = escape(str(exp))
+                safe_rec = escape(str(rec))
+                ev_snippet = f"<b>{safe_title}</b><br/><font color='#64748b'>Evidence:</font> <i>{safe_evidence[:160]}...</i>" if len(safe_evidence) > 160 else f"<b>{safe_title}</b><br/><font color='#64748b'>Evidence:</font> <i>{safe_evidence}</i>"
                 if src:
-                    ev_snippet += f"<br/><font color='#0284c7'>Ref: {src}</font>"
+                    ev_snippet += f"<br/><font color='#0284c7'>Ref: {safe_source}</font>"
 
                 sev_cell = Paragraph(f"<b>{sev[:4].upper()}</b>", ParagraphStyle("SevText", parent=badge_style, textColor=cls._get_severity_color(sev)))
                 f_cell = Paragraph(ev_snippet, body_style)
-                exp_cell = Paragraph(exp, body_style)
-                rec_cell = Paragraph(rec, body_style)
+                exp_cell = Paragraph(safe_exp, body_style)
+                rec_cell = Paragraph(safe_rec, body_style)
 
                 findings_rows.append([sev_cell, f_cell, exp_cell, rec_cell])
 
@@ -212,7 +292,7 @@ class ReportGenerator:
             ]))
             elements.append(f_table)
 
-        # 5. Compliance Matrix (if present)
+        # 6. Compliance Matrix (if present)
         comp_items = scan_data.get("compliance_items", [])
         if comp_items:
             elements.append(Spacer(1, 14))
@@ -249,7 +329,7 @@ class ReportGenerator:
             ]))
             elements.append(comp_table)
 
-        # 6. Technical Website Checks (if present)
+        # 7. Technical Website Checks (if present)
         meta = scan_data.get("metadata", {})
         if isinstance(meta, dict) and "technical_checks" in meta:
             elements.append(Spacer(1, 14))
@@ -282,7 +362,7 @@ class ReportGenerator:
             ]))
             elements.append(tech_table)
 
-        # 7. Disclaimer
+        # 8. Disclaimer
         elements.append(Spacer(1, 20))
         disclaimer_text = (
             "<b>Disclaimer:</b> CyberGuard is an automated digital risk discovery tool intended for informational "

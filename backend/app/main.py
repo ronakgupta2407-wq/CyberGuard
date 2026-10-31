@@ -3,8 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-from app.models import Scan, Finding, ComplianceItem
+from app.models import AppState, Scan, Finding, ComplianceItem
 from app.routes import tc, phishing, website, compliance, unified, scans, auth_routes
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -51,14 +52,16 @@ def health_check():
     return {
         "status": "healthy",
         "database": "sqlite_connected",
-        "ai_available": bool(settings.GEMINI_API_KEY or settings.OPENAI_API_KEY)
+        "ai_provider": "groq" if settings.GROQ_API_KEY else "heuristic_fallback",
+        "ai_available": bool(settings.GROQ_API_KEY or settings.GEMINI_API_KEY or settings.OPENAI_API_KEY),
     }
 
 # Initial seed data for demo & testing if database is fresh
 def seed_demo_data():
     db = SessionLocal()
     try:
-        if db.query(Scan).count() == 0:
+        seed_marker = db.query(AppState).filter(AppState.key == "demo_data_seeded").first()
+        if db.query(Scan).count() == 0 and seed_marker is None:
             logger.info("Database empty, populating initial sample scans...")
 
             # 1. Sample T&C Scan
@@ -191,6 +194,7 @@ def seed_demo_data():
             )
             db.add_all([wf1, wf2])
 
+            db.add(AppState(key="demo_data_seeded", value="true"))
             db.commit()
             logger.info("Sample scans successfully seeded!")
     except Exception as e:

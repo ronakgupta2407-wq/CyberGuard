@@ -3,15 +3,34 @@ from fastapi import APIRouter, Depends, HTTPException, Response, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
-from app.models import Scan, Finding, ComplianceItem
+from app.models import AppState, Scan, Finding, ComplianceItem
 from app.schemas import (
-    ScanResponse, ScanSummaryResponse, ScanCompareRequest, ScanCompareResponse,
+    ScanResponse, ScanSummaryResponse, KeyFindingResponse, ScanCompareRequest, ScanCompareResponse,
     FindingResponse, ComplianceItemResponse
 )
 from app.services.report_generator import ReportGenerator
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/scans", tags=["Scans & Reports"])
+
+@router.delete("")
+def delete_all_scans(db: Session = Depends(get_db)):
+    finding_count = db.query(Finding).delete(synchronize_session=False)
+    compliance_item_count = db.query(ComplianceItem).delete(synchronize_session=False)
+    scan_count = db.query(Scan).delete(synchronize_session=False)
+    seed_marker = db.query(AppState).filter(AppState.key == "demo_data_seeded").first()
+    if seed_marker is None:
+        db.add(AppState(key="demo_data_seeded", value="true"))
+    else:
+        seed_marker.value = "true"
+    db.commit()
+
+    return {
+        "status": "success",
+        "deleted_count": scan_count,
+        "deleted_findings": finding_count,
+        "deleted_compliance_items": compliance_item_count,
+    }
 
 @router.get("", response_model=List[ScanSummaryResponse])
 def get_all_scans(
@@ -32,6 +51,16 @@ def get_all_scans(
         finding_counts = {}
         for f in s.findings:
             finding_counts[f.severity] = finding_counts.get(f.severity, 0) + 1
+        ordered_findings = sorted(
+            s.findings,
+            key=lambda finding: {
+                "Critical": 0,
+                "High": 1,
+                "Medium": 2,
+                "Low": 3,
+                "Informational": 4,
+            }.get(finding.severity, 5),
+        )
 
         results.append(ScanSummaryResponse(
             id=s.id,
@@ -42,7 +71,19 @@ def get_all_scans(
             risk_level=s.risk_level,
             summary=s.summary,
             created_at=s.created_at,
-            finding_counts=finding_counts
+            finding_count=len(s.findings),
+            finding_counts=finding_counts,
+            key_findings=[
+                KeyFindingResponse(
+                    category=f.category or "",
+                    severity=f.severity,
+                    title=f.title,
+                    evidence=f.evidence or "",
+                    explanation=f.explanation or "",
+                    recommendation=f.recommendation or "",
+                )
+                for f in ordered_findings[:3]
+            ],
         ))
 
     return results

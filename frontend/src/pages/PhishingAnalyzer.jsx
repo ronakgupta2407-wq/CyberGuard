@@ -3,14 +3,17 @@ import {
   Mail,
   Upload,
   AlertTriangle,
-  ShieldCheck,
   Loader2,
-  Link2
+  Link2,
+  ShieldAlert,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../services/api';
 import FindingCard from '../components/FindingCard';
 import RiskBadge from '../components/RiskBadge';
 import PdfExportButton from '../components/PdfExportButton';
+import ExecutiveSummary from '../components/ExecutiveSummary';
+import { cleanDomain } from '../utils/formatters';
 
 const SAMPLE_EMAILS = {
   bank_phish: {
@@ -37,7 +40,7 @@ Chase Security Team`,
     subject: 'Urgent task - Are you available right now?',
     body: `Hi,
 
-I am currently in an offsite meeting and cannot take calls. I need you to handle a confidential task immediately. 
+I am currently in an offsite meeting and cannot take calls. I need you to handle a confidential task immediately.
 
 Please purchase 5 Apple Gift Cards of $200 each and email me the photos of the redemption codes on the back right away. I will reimburse you by tomorrow morning through payroll.
 
@@ -66,7 +69,7 @@ The GitHub Team`,
 };
 
 export default function PhishingAnalyzer({ onScanCompleted }) {
-  const [mode, setMode] = useState('fields'); // 'fields' | 'eml'
+  const [mode, setMode] = useState('fields');
   const [sender, setSender] = useState('');
   const [replyTo, setReplyTo] = useState('');
   const [subject, setSubject] = useState('');
@@ -82,276 +85,239 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
       setError('Please provide at least the email subject or body text.');
       return;
     }
-    setError('');
-    setLoading(true);
+    setError(''); setLoading(true);
     try {
-      const scan = await api.analyzePhishing({
-        sender,
-        replyTo,
-        subject,
-        body,
-      });
+      const scan = await api.analyzePhishing({ sender, replyTo, subject, body });
       setResult(scan);
       if (onScanCompleted) onScanCompleted(scan);
     } catch (err) {
       setError(err.message || 'Phishing analysis failed');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleUploadEml = async (e) => {
     e.preventDefault();
-    if (!selectedFile) {
-      setError('Please select an .eml or raw email text file.');
-      return;
-    }
-    setError('');
-    setLoading(true);
+    if (!selectedFile) { setError('Please select an .eml or raw email text file.'); return; }
+    setError(''); setLoading(true);
     try {
       const scan = await api.uploadEmlFile(selectedFile);
       setResult(scan);
       if (onScanCompleted) onScanCompleted(scan);
     } catch (err) {
       setError(err.message || 'EML upload failed');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const applyPreset = (key) => {
     const p = SAMPLE_EMAILS[key];
-    setSender(p.sender);
-    setReplyTo(p.replyTo);
-    setSubject(p.subject);
-    setBody(p.body);
-    setMode('fields');
-    setError('');
+    setSender(p.sender); setReplyTo(p.replyTo);
+    setSubject(p.subject); setBody(p.body);
+    setMode('fields'); setError('');
   };
 
   const meta = result?.metadata || {};
   const inspectedUrls = meta.inspected_urls || [];
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-5">
+    <div className="space-y-6 pb-20">
+      {/* ── HEADER ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
-            Email Phishing Analyzer
-          </h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Analyze sender headers, deceptive hyperlinks, brand impersonation, and urgency triggers.
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Email Threat Inspector</h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Examine sender identity, reply-to mismatches, suspicious links, brand impersonation, and common social-engineering tactics.
           </p>
         </div>
 
-        {/* Presets */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-neutral-400 mr-1">Presets:</span>
-          <button
-            onClick={() => applyPreset('bank_phish')}
-            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
-          >
-            Bank Alert
-          </button>
-          <button
-            onClick={() => applyPreset('ceo_giftcard')}
-            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
-          >
-            CEO Gift Card
-          </button>
-          <button
-            onClick={() => applyPreset('legit_notice')}
-            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
-          >
-            Legitimate Alert
-          </button>
-        </div>
-      </div>
-
-      {/* Input Box */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5">
-        <div className="flex items-center gap-2 mb-4 border-b border-neutral-800 pb-3">
-          <button
-            onClick={() => setMode('fields')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
-              mode === 'fields'
-                ? 'bg-neutral-800 text-white'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <Mail className="w-3.5 h-3.5" />
-            <span>Email Headers & Text</span>
-          </button>
-          <button
-            onClick={() => setMode('eml')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors ${
-              mode === 'eml'
-                ? 'bg-neutral-800 text-white'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Upload .EML File</span>
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-3 p-2.5 bg-red-950/40 border border-red-800/60 rounded text-xs text-red-300">
-            {error}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-slate-400 mr-1 font-medium">Examples:</span>
+            {Object.entries({ bank_phish: 'Bank Alert', ceo_giftcard: 'CEO Gift Card', legit_notice: 'Legitimate Notice' }).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => applyPreset(key)}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium transition-colors"
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        )}
-
-        {mode === 'fields' ? (
-          <form onSubmit={handleAnalyze} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
-                  From (Sender Header)
-                </label>
-                <input
-                  type="text"
-                  placeholder='e.g. PayPal Support <support@paypal-security.xyz>'
-                  value={sender}
-                  onChange={(e) => setSender(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-300 mb-1">
-                  Reply-To (Optional Header)
-                </label>
-                <input
-                  type="text"
-                  placeholder='e.g. response-inbox@mail-server.top'
-                  value={replyTo}
-                  onChange={(e) => setReplyTo(e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-neutral-300 mb-1">
-                Subject Line
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Notice: Please verify account credentials"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-neutral-300 mb-1">
-                Message Body
-              </label>
-              <textarea
-                rows={7}
-                placeholder="Paste the email body or full raw message text..."
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-md p-3 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono leading-relaxed"
-              />
-            </div>
-
-            <div className="flex justify-end pt-1">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                <span>{loading ? 'Inspecting indicators...' : 'Inspect Email'}</span>
-              </button>
-            </div>
-          </form>
-        ) : (
-          <form onSubmit={handleUploadEml} className="space-y-4">
-            <div className="border border-dashed border-neutral-800 rounded-lg p-8 text-center">
-              <Upload className="w-6 h-6 mx-auto text-neutral-500 mb-2" />
-              <p className="text-xs text-neutral-300 mb-1 font-medium">
-                {selectedFile ? selectedFile.name : 'Select a raw .EML or .MSG email export file'}
-              </p>
-              <p className="text-[11px] text-neutral-500 mb-3">
-                Parses RFC 822 headers and MIME boundaries without executing scripts.
-              </p>
-              <input
-                type="file"
-                accept=".eml,.msg,.txt"
-                id="eml-file"
-                className="hidden"
-                onChange={(e) => setSelectedFile(e.target.files[0])}
-              />
-              <label
-                htmlFor="eml-file"
-                className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded cursor-pointer transition-colors inline-block"
-              >
-                Browse .EML Files
-              </label>
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={loading || !selectedFile}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                <span>{loading ? 'Parsing message...' : 'Upload & Analyze .EML'}</span>
-              </button>
-            </div>
-          </form>
-        )}
+        </div>
       </div>
 
-      {/* Results Section */}
+      {/* ── INPUT PANEL ─────────────────────────────────────────── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+        {/* Mode tabs */}
+        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/60 px-2 pr-4">
+          <div className="flex items-center gap-0">
+            {[
+              { m: 'fields', icon: Mail, label: 'Email Headers & Text' },
+              { m: 'eml', icon: Upload, label: 'Upload .EML File' },
+            ].map(({ m, icon: Icon, label }) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold transition-colors border-b-2 ${
+                  mode === m
+                    ? 'border-rose-500 text-rose-400 bg-rose-500/5'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
+        </div>
+
+        <div className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-xs text-red-300 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {mode === 'fields' ? (
+            <form onSubmit={handleAnalyze} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Sender Email Address (From)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PayPal Support <support@paypal-security.xyz>"
+                    value={sender}
+                    onChange={(e) => setSender(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500 placeholder:text-slate-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">Reply-To Address (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. response-inbox@mail-server.top"
+                    value={replyTo}
+                    onChange={(e) => setReplyTo(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500 placeholder:text-slate-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Email Subject Line</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Action Required: Please verify your account access"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500 placeholder:text-slate-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">Email Body Content</label>
+                <textarea
+                  rows={8}
+                  placeholder="Paste the email body or full raw message text..."
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-200 focus:outline-none focus:border-rose-500 leading-relaxed placeholder:text-slate-600 resize-none font-sans"
+                />
+              </div>
+
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-xs text-slate-500">
+                  Evaluates brand impersonation, urgent deadlines, and malicious links via Groq LLM
+                </span>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
+                  <span>{loading ? 'Inspecting email...' : 'Inspect Email'}</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleUploadEml} className="space-y-4">
+              <div className="border border-dashed border-slate-800 hover:border-rose-500/50 rounded-2xl p-10 text-center transition-colors bg-slate-950/40">
+                <Upload className="w-8 h-8 mx-auto text-slate-500 mb-2.5" />
+                <p className="text-sm text-slate-200 mb-1 font-semibold">
+                  {selectedFile ? selectedFile.name : 'Upload .EML or .MSG email export file'}
+                </p>
+                <p className="text-xs text-slate-500 mb-4">
+                  Parses RFC 822 email headers and attachments safely without executing scripts.
+                </p>
+                <input type="file" accept=".eml,.msg,.txt" id="eml-file" className="hidden"
+                  onChange={(e) => setSelectedFile(e.target.files[0])} />
+                <label htmlFor="eml-file"
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 cursor-pointer transition-colors inline-block">
+                  Browse .EML Files
+                </label>
+              </div>
+              <div className="flex justify-end">
+                <button type="submit" disabled={loading || !selectedFile}
+                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  <span>{loading ? 'Parsing message...' : 'Upload & Analyze .EML'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* ── RESULTS ─────────────────────────────────────────────── */}
       {result && (
         <div className="space-y-5">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded bg-neutral-950 border border-neutral-800 flex flex-col items-center justify-center font-mono">
-                <span className="text-xl font-bold text-white">{result.overall_risk_score}</span>
-                <span className="text-[8px] text-neutral-400 uppercase">Score</span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-base font-semibold text-white">{result.target || 'Email Analysis Result'}</h2>
-                  <RiskBadge level={result.risk_level} size="sm" />
+          {/* Result Header */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-5">
+                <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-rose-400">{result.overall_risk_score}</span>
+                  <span className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold">Risk Score</span>
                 </div>
-                <p className="text-xs text-neutral-300 max-w-2xl leading-relaxed">
-                  {result.summary}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <h2 className="text-lg font-bold text-white">{cleanDomain(result.target) || 'Email Analysis Result'}</h2>
+                    <RiskBadge level={result.risk_level} size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">{result.summary}</p>
+                </div>
               </div>
+              <PdfExportButton scanId={result.id} label="Download PDF Report" />
             </div>
-
-            <PdfExportButton scanId={result.id} label="Export PDF" />
           </div>
 
-          {/* Hyperlinks Inspected Table */}
+          <ExecutiveSummary scan={result} />
+
+          {/* URL Extraction Table */}
           {inspectedUrls.length > 0 && (
-            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
-              <h3 className="text-xs font-semibold text-neutral-200 flex items-center gap-2 mb-2">
-                <Link2 className="w-4 h-4 text-neutral-400" />
-                <span>Extracted Hyperlink Destinations ({inspectedUrls.length})</span>
-              </h3>
-              <p className="text-[11px] text-neutral-400 mb-3">
-                Links are evaluated passively without making outbound connections.
-              </p>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-cyan-400" />
+                  <span className="text-xs font-bold text-white">Extracted Hyperlink Destinations</span>
+                  <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-medium">{inspectedUrls.length}</span>
+                </div>
+                <span className="text-xs text-slate-500">Evaluated passively without making outbound connections</span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-neutral-950 text-neutral-400 text-[10px] uppercase border-b border-neutral-800">
+                  <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-500 text-[10px] uppercase">
                     <tr>
-                      <th className="py-2 px-3">Target URL</th>
+                      <th className="py-2 px-4 w-12">#</th>
+                      <th className="py-2 px-4">Target Destination URL</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-800/80">
+                  <tbody className="divide-y divide-slate-800/50">
                     {inspectedUrls.map((u, i) => (
-                      <tr key={i} className="hover:bg-neutral-800/40">
-                        <td className="py-2 px-3 text-neutral-300 truncate max-w-md">{u}</td>
+                      <tr key={i} className="hover:bg-slate-800/40">
+                        <td className="py-2 px-4 text-slate-500">{String(i + 1).padStart(2, '0')}</td>
+                        <td className="py-2 px-4 text-slate-300 truncate max-w-xl">{u}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -362,20 +328,18 @@ export default function PhishingAnalyzer({ onScanCompleted }) {
 
           {/* Findings */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-neutral-100 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-neutral-400" />
-              <span>Warning Signs & Indicators ({result.findings.length})</span>
+            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <span>Warning Signs &amp; Threat Indicators</span>
+              <span className="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-medium">{result.findings.length}</span>
             </h3>
-
             {result.findings.length === 0 ? (
-              <div className="bg-neutral-900/60 border border-neutral-800 rounded-lg p-6 text-center text-xs text-neutral-400">
-                No typical phishing markers, sender spoofing, or deceptive links detected.
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-xs text-slate-400">
+                No phishing indicators or deceptive patterns detected in this email.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {result.findings.map((f, i) => (
-                  <FindingCard key={f.id || i} finding={f} />
-                ))}
+                {result.findings.map((f, i) => <FindingCard key={f.id || i} finding={f} />)}
               </div>
             )}
           </div>

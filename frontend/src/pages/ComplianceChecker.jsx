@@ -3,12 +3,16 @@ import {
   Scale,
   Loader2,
   FileText,
-  Info
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '../services/api';
 import FindingCard from '../components/FindingCard';
 import RiskBadge from '../components/RiskBadge';
 import PdfExportButton from '../components/PdfExportButton';
+import ExecutiveSummary from '../components/ExecutiveSummary';
 
 const SAMPLE_COMPLIANCE_TEXTS = {
   compliant: {
@@ -91,42 +95,47 @@ export default function ComplianceChecker({ onScanCompleted }) {
   const inconclusiveCount = complianceItems.filter((i) => i.status === 'Inconclusive').length;
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-800 pb-5">
+    <div className="space-y-6 pb-20">
+      {/* ── HEADER ──────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/70 pb-5">
         <div>
-          <h1 className="text-xl font-semibold text-white tracking-tight">
-            Privacy Compliance Checker
-          </h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Evaluate policy statements against statutory obligations under GDPR, CCPA/CPRA, and India's DPDP Act 2023.
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-medium text-blue-300 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-full">
+              Privacy standards
+            </span>
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Privacy Compliance Checker</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Compare privacy-policy disclosures with key obligations in the GDPR, CCPA/CPRA, and India’s DPDP Act 2023.
           </p>
         </div>
 
         {/* Quick Presets */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-neutral-400 mr-1">Presets:</span>
+          <span className="text-xs text-slate-500 font-medium mr-1">Examples:</span>
           <button
+            type="button"
             onClick={() => applyPreset('compliant')}
-            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+            className="compliance-sample-button"
           >
-            Compliant Sample
+            Compliant policy
           </button>
           <button
+            type="button"
             onClick={() => applyPreset('missing_gaps')}
-            className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs transition-colors"
+            className="compliance-sample-button"
           >
-            Missing Gaps Sample
+            Policy with gaps
           </button>
         </div>
       </div>
 
-      {/* Input Box */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5">
+      {/* ── INPUT PANEL ─────────────────────────────────────────── */}
+      <div className="cyber-card rounded-lg p-5">
         <form onSubmit={handleAudit} className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-300 mb-1">
+              <label className="block font-mono text-[10px] uppercase tracking-wider text-slate-400 mb-1">
                 Document Title
               </label>
               <input
@@ -134,12 +143,12 @@ export default function ComplianceChecker({ onScanCompleted }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Enterprise Privacy Policy"
-                className="bg-neutral-950 border border-neutral-800 rounded-md px-3 py-1.5 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 w-72 max-w-full"
+                className="bg-slate-950 border border-slate-700/60 rounded-md px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500/50 font-mono w-72 max-w-full"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-neutral-300 mb-1">
+              <label className="block font-mono text-[10px] uppercase tracking-wider text-slate-400 mb-1">
                 Applicable Frameworks
               </label>
               <div className="flex items-center gap-1.5">
@@ -150,10 +159,11 @@ export default function ComplianceChecker({ onScanCompleted }) {
                       type="button"
                       key={fw}
                       onClick={() => toggleFramework(fw)}
-                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                      aria-pressed={isChecked}
+                      className={`compliance-framework-option ${
                         isChecked
-                          ? 'bg-neutral-800 text-white border border-neutral-700'
-                          : 'bg-neutral-950 text-neutral-500 border border-neutral-800 hover:text-neutral-300'
+                          ? 'compliance-framework-option--selected'
+                          : ''
                       }`}
                     >
                       {fw === 'GDPR' && 'GDPR (EU)'}
@@ -167,141 +177,137 @@ export default function ComplianceChecker({ onScanCompleted }) {
           </div>
 
           {error && (
-            <div className="p-2.5 bg-red-950/40 border border-red-800/60 rounded text-xs text-red-300">
+            <div className="p-2.5 bg-red-950/40 border border-red-700/50 rounded text-xs text-red-300 font-mono">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-neutral-300 mb-1">
+            <label className="block font-mono text-[10px] uppercase tracking-wider text-slate-400 mb-1">
               Policy Content
             </label>
             <textarea
               rows={8}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste policy text or select a preset to evaluate against legal checklists..."
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-md p-3 text-xs text-neutral-100 focus:outline-none focus:border-neutral-600 font-mono leading-relaxed"
+              placeholder="// Paste privacy policy text or load a preset sample to verify legal checklist coverage..."
+              className="w-full bg-slate-950 border border-slate-700/60 rounded-md p-3 text-xs text-slate-200 focus:outline-none focus:border-violet-500/50 font-mono leading-relaxed placeholder:text-slate-700 resize-none"
             />
           </div>
 
           <div className="flex justify-between items-center pt-1">
-            <span className="text-[11px] text-neutral-400">
-              Evaluates statements against legal obligations (e.g. GDPR Art. 17, CCPA § 1798.120, DPDP Sec. 13)
+            <span className="text-[11px] font-mono text-slate-500">
+              Evaluates statements against statutory provisions (GDPR Art. 17, CCPA § 1798.120, DPDP Sec. 13)
             </span>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="compliance-submit-button"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              <span>{loading ? 'Evaluating...' : 'Check Compliance'}</span>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Scale className="w-4 h-4" />}
+              <span>{loading ? 'Reviewing policy...' : 'Review policy'}</span>
             </button>
           </div>
         </form>
       </div>
 
-      {/* Results Section */}
+      {/* ── RESULTS ─────────────────────────────────────────────── */}
       {result && (
         <div className="space-y-5">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-5 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded bg-neutral-950 border border-neutral-800 flex flex-col items-center justify-center font-mono">
-                <span className="text-xl font-bold text-white">{result.overall_risk_score}</span>
-                <span className="text-[8px] text-neutral-400 uppercase">Risk Index</span>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-base font-semibold text-white">{result.target}</h2>
-                  <RiskBadge level={result.risk_level} size="sm" />
+          {/* Header Card */}
+          <div className="cyber-card rounded-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-500/10 to-transparent border-l-2 border-violet-500 px-5 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-violet-400">LEGAL_COMPLIANCE_SCORECARD</span>
+            </div>
+            <div className="p-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-lg bg-slate-950 border border-slate-700/60 flex flex-col items-center justify-center font-mono">
+                  <span className="text-2xl font-bold text-violet-400">{result.overall_risk_score}</span>
+                  <span className="text-[8px] text-slate-500 uppercase tracking-wider">GAP_IDX</span>
                 </div>
-                <p className="text-xs text-neutral-300 max-w-2xl leading-relaxed">
-                  {result.summary}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <h2 className="text-base font-bold text-white font-mono">{result.target}</h2>
+                    <RiskBadge level={result.risk_level} size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">{result.summary}</p>
+                </div>
               </div>
-            </div>
 
-            <PdfExportButton scanId={result.id} label="Export PDF" />
-          </div>
-
-          {/* Compliance Stats Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-              <span className="text-[11px] text-neutral-400 font-medium block">Supported</span>
-              <span className="text-xl font-semibold text-emerald-400 font-mono block mt-1">{supportedCount}</span>
-            </div>
-
-            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-              <span className="text-[11px] text-neutral-400 font-medium block">Potentially Missing</span>
-              <span className="text-xl font-semibold text-amber-400 font-mono block mt-1">{missingCount}</span>
-            </div>
-
-            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-              <span className="text-[11px] text-neutral-400 font-medium block">Inconclusive</span>
-              <span className="text-xl font-semibold text-neutral-300 font-mono block mt-1">{inconclusiveCount}</span>
-            </div>
-
-            <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-3">
-              <span className="text-[11px] text-neutral-400 font-medium block">Conflicting</span>
-              <span className="text-xl font-semibold text-red-400 font-mono block mt-1">{conflictingCount}</span>
+              <PdfExportButton scanId={result.id} label="Export PDF" />
             </div>
           </div>
 
-          {/* Legal Checklist Matrix */}
-          <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
-            <div className="p-4 border-b border-neutral-800 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-xs font-semibold text-neutral-200 uppercase tracking-wider">
+          <ExecutiveSummary scan={result} />
+
+          {/* Compliance Breakdown Stat Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
+            <div className="cyber-card rounded-lg p-3">
+              <span className="text-[10px] text-slate-500 uppercase block">SUPPORTED</span>
+              <span className="text-xl font-bold text-emerald-400 block mt-1">{supportedCount}</span>
+            </div>
+            <div className="cyber-card rounded-lg p-3">
+              <span className="text-[10px] text-slate-500 uppercase block">POTENTIALLY_MISSING</span>
+              <span className="text-xl font-bold text-amber-400 block mt-1">{missingCount}</span>
+            </div>
+            <div className="cyber-card rounded-lg p-3">
+              <span className="text-[10px] text-slate-500 uppercase block">INCONCLUSIVE</span>
+              <span className="text-xl font-bold text-slate-300 block mt-1">{inconclusiveCount}</span>
+            </div>
+            <div className="cyber-card rounded-lg p-3">
+              <span className="text-[10px] text-slate-500 uppercase block">CONFLICTING</span>
+              <span className="text-xl font-bold text-red-400 block mt-1">{conflictingCount}</span>
+            </div>
+          </div>
+
+          {/* Legal Checklist Matrix Table */}
+          <div className="cyber-card rounded-lg overflow-hidden">
+            <div className="cyber-panel-header px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wider">
                 Statutory Requirement Matrix
               </h3>
 
-              <div className="flex items-center gap-1 bg-neutral-950 p-0.5 rounded border border-neutral-800">
+              <div className="flex items-center gap-1 bg-slate-950 p-0.5 rounded border border-slate-800 font-mono">
                 {['ALL', ...selectedFrameworks].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                    aria-pressed={activeTab === tab}
+                    className={`compliance-filter-option ${
                       activeTab === tab
-                        ? 'bg-neutral-800 text-white'
-                        : 'text-neutral-400 hover:text-neutral-200'
+                        ? 'compliance-filter-option--active'
+                        : ''
                     }`}
                   >
-                    {tab}
+                    {tab === 'ALL' ? 'All' : tab}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-neutral-950/70 text-neutral-400 text-[11px] font-medium border-b border-neutral-800">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-950/80 border-b border-slate-800/60 text-slate-500 text-[10px] uppercase">
                   <tr>
                     <th className="py-2.5 px-4">Framework</th>
                     <th className="py-2.5 px-4">Requirement</th>
                     <th className="py-2.5 px-4">Status</th>
-                    <th className="py-2.5 px-4">Statutory Reference</th>
-                    <th className="py-2.5 px-4">Analysis & Evidence</th>
+                    <th className="py-2.5 px-4">Citation</th>
+                    <th className="py-2.5 px-4">Analysis &amp; Evidence</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-800/80">
+                <tbody className="divide-y divide-slate-800/40">
                   {filteredItems.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-neutral-800/40">
-                      <td className="py-2.5 px-4 font-mono font-medium text-neutral-300">
-                        {item.framework}
-                      </td>
-                      <td className="py-2.5 px-4 font-medium text-neutral-200">
-                        {item.requirement_title}
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <RiskBadge level={item.status} size="sm" />
-                      </td>
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-neutral-400">
-                        {item.citation}
-                      </td>
-                      <td className="py-2.5 px-4 text-neutral-300 text-[11px] max-w-sm">
+                    <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2.5 px-4 font-bold text-violet-400">{item.framework}</td>
+                      <td className="py-2.5 px-4 font-medium text-slate-200">{item.requirement_title}</td>
+                      <td className="py-2.5 px-4"><RiskBadge level={item.status} size="sm" /></td>
+                      <td className="py-2.5 px-4 text-slate-400 text-[11px]">{item.citation}</td>
+                      <td className="py-2.5 px-4 text-slate-300 text-[11px] max-w-sm">
                         {item.evidence && (
-                          <p className="italic text-neutral-400 mb-0.5">"{item.evidence}"</p>
+                          <p className="italic text-slate-400 mb-0.5">"{item.evidence}"</p>
                         )}
-                        <p className="text-neutral-400">{item.notes}</p>
+                        <p className="text-slate-400">{item.notes}</p>
                       </td>
                     </tr>
                   ))}
@@ -309,19 +315,21 @@ export default function ComplianceChecker({ onScanCompleted }) {
               </table>
             </div>
 
-            <div className="p-3 bg-neutral-950 border-t border-neutral-800/80 text-[11px] text-neutral-400 flex items-start gap-2">
-              <Info className="w-3.5 h-3.5 text-neutral-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-slate-950 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono flex items-start gap-2">
+              <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
               <span>
-                <strong>Authoritative Note:</strong> A missing policy statement represents a documentation gap, not an automatic statutory breach. Companies may maintain separate jurisdiction-specific notices or internal compliance controls.
+                NOTE: A missing statement reflects a policy documentation gap. Companies may implement jurisdiction-specific appendices or internal governance mechanisms.
               </span>
             </div>
           </div>
 
-          {/* Actionable Recommendations */}
+          {/* Remediation Findings */}
           {result.findings.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-neutral-100">
-                Documentation Gaps & Next Steps ({result.findings.length})
+              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-violet-400" />
+                <span>Documentation Gaps &amp; Recommendations</span>
+                <span className="font-mono text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded">{result.findings.length}</span>
               </h3>
               <div className="grid grid-cols-1 gap-3">
                 {result.findings.map((f, i) => (

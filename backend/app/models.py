@@ -4,6 +4,12 @@ from sqlalchemy import Column, String, Integer, Float, Text, DateTime, ForeignKe
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+class AppState(Base):
+    __tablename__ = "app_state"
+
+    key = Column(String(64), primary_key=True)
+    value = Column(String(255), nullable=False)
+
 class Scan(Base):
     __tablename__ = "scans"
 

@@ -12,6 +12,10 @@ function getAuthHeaders() {
   return headers;
 }
 
+function getStoredApiKey(overrideKey = null) {
+  return overrideKey || localStorage.getItem('cyberguard_groq_key') || localStorage.getItem('cyberguard_gemini_key') || null;
+}
+
 export const api = {
   // System Health
   async checkHealth() {
@@ -38,7 +42,7 @@ export const api = {
       body: JSON.stringify({
         text,
         title,
-        user_api_key: userApiKey || localStorage.getItem('cyberguard_gemini_key') || null,
+        user_api_key: getStoredApiKey(userApiKey),
       }),
     });
     if (!res.ok) {
@@ -52,7 +56,7 @@ export const api = {
     const formData = new FormData();
     formData.append('file', file);
     if (title) formData.append('title', title);
-    const key = localStorage.getItem('cyberguard_gemini_key');
+    const key = getStoredApiKey();
     if (key) formData.append('user_api_key', key);
 
     const res = await fetch(`${API_BASE}/tc/upload`, {
@@ -81,7 +85,7 @@ export const api = {
         reply_to: replyTo || null,
         subject: subject || null,
         body: body || null,
-        user_api_key: userApiKey || localStorage.getItem('cyberguard_gemini_key') || null,
+        user_api_key: getStoredApiKey(userApiKey),
       }),
     });
     if (!res.ok) {
@@ -94,7 +98,7 @@ export const api = {
   async uploadEmlFile(file) {
     const formData = new FormData();
     formData.append('file', file);
-    const key = localStorage.getItem('cyberguard_gemini_key');
+    const key = getStoredApiKey();
     if (key) formData.append('user_api_key', key);
 
     const res = await fetch(`${API_BASE}/phishing/upload`, {
@@ -138,7 +142,7 @@ export const api = {
         text,
         frameworks,
         title: title || 'Privacy Compliance Audit',
-        user_api_key: localStorage.getItem('cyberguard_gemini_key') || null,
+        user_api_key: getStoredApiKey(),
       }),
     });
     if (!res.ok) {
@@ -161,7 +165,7 @@ export const api = {
         policy_text: policyText || null,
         email_text: emailText || null,
         title: title || 'Unified Security & Privacy Audit',
-        user_api_key: localStorage.getItem('cyberguard_gemini_key') || null,
+        user_api_key: getStoredApiKey(),
       }),
     });
     if (!res.ok) {
@@ -214,6 +218,15 @@ export const api = {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete scan');
+    return res.json();
+  },
+
+  async deleteAllScans() {
+    const res = await fetch(`${API_BASE}/scans`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to reset dashboard data');
     return res.json();
   },
 

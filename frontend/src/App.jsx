@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GOOGLE_CLIENT_ID, googleAuth } from './services/firebase';
 import Navbar from './components/Navbar';
 import ApiKeyModal from './components/ApiKeyModal';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import TCAnalyzer from './pages/TCAnalyzer';
 import PhishingAnalyzer from './pages/PhishingAnalyzer';
@@ -8,12 +11,28 @@ import WebsiteChecker from './pages/WebsiteChecker';
 import ComplianceChecker from './pages/ComplianceChecker';
 import ScanHistory from './pages/ScanHistory';
 import ScanDetail from './pages/ScanDetail';
-import { ShieldCheck, Database, Cpu, FileCheck } from 'lucide-react';
+import About from './pages/About';
+import StartupLoader from './components/StartupLoader';
+import DeveloperCards from './components/DeveloperCards';
 
 export default function App() {
+  const [showStartupLoader, setShowStartupLoader] = useState(true);
+  const [currentUser, setCurrentUser] = useState(googleAuth.getUser());
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('cyberguard_theme') === 'dark' ? 'dark' : 'light',
+  );
+  const [guestMode, setGuestMode] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedScan, setSelectedScan] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [lastScan, setLastScan] = useState(null);
+
+  useEffect(() => {
+    const user = googleAuth.getUser();
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, []);
 
   const handleSelectScan = (scan) => {
     setSelectedScan(scan);
@@ -21,86 +40,97 @@ export default function App() {
   };
 
   const handleScanCompleted = (scan) => {
-    // When a scan completes in any module, we can either stay or open detail
-    // Keeping user on current module page with results shown
+    setLastScan(scan);
   };
 
+  const handleLogout = () => {
+    googleAuth.signOut();
+    setCurrentUser(null);
+    setGuestMode(false);
+    setActiveTab('dashboard');
+  };
+
+  const handleThemeChange = (nextTheme) => {
+    setTheme(nextTheme);
+    localStorage.setItem('cyberguard_theme', nextTheme);
+  };
+
+  const isAccessAllowed = !!currentUser || guestMode;
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      {/* Top Navigation */}
-      <Navbar
-        activeTab={activeTab === 'detail' ? 'history' : activeTab}
-        setActiveTab={(tab) => {
-          setSelectedScan(null);
-          setActiveTab(tab);
-        }}
-        onOpenSettings={() => setSettingsOpen(true)}
-      />
-
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            setActiveTab={setActiveTab}
-            onSelectScan={handleSelectScan}
-          />
-        )}
-
-        {activeTab === 'tc' && (
-          <TCAnalyzer onScanCompleted={handleScanCompleted} />
-        )}
-
-        {activeTab === 'phishing' && (
-          <PhishingAnalyzer onScanCompleted={handleScanCompleted} />
-        )}
-
-        {activeTab === 'website' && (
-          <WebsiteChecker onScanCompleted={handleScanCompleted} />
-        )}
-
-        {activeTab === 'compliance' && (
-          <ComplianceChecker onScanCompleted={handleScanCompleted} />
-        )}
-
-        {activeTab === 'history' && (
-          <ScanHistory onSelectScan={handleSelectScan} />
-        )}
-
-        {activeTab === 'detail' && selectedScan && (
-          <ScanDetail
-            scan={selectedScan}
-            onBack={() => {
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      {showStartupLoader && <StartupLoader onComplete={() => setShowStartupLoader(false)} />}
+      {!isAccessAllowed ? (
+        <LoginPage
+          onLoginSuccess={(user) => setCurrentUser(user)}
+          onContinueGuest={() => setGuestMode(true)}
+          theme={theme}
+          onThemeChange={handleThemeChange}
+          developers={<DeveloperCards />}
+        />
+      ) : (
+        <div className={`app-workspace theme-${theme} relative isolate min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-violet-500/30 selection:text-violet-200 xl:pl-64`}>
+          <div className="site-ambient" aria-hidden="true" />
+          <Navbar
+            activeTab={activeTab === 'detail' ? 'history' : activeTab}
+            setActiveTab={(tab) => {
               setSelectedScan(null);
-              setActiveTab('history');
+              setActiveTab(tab);
             }}
+            onOpenSettings={() => setSettingsOpen(true)}
+            onLogout={handleLogout}
+            currentUser={currentUser}
+            theme={theme}
+            onThemeChange={handleThemeChange}
           />
-        )}
-      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-900 bg-neutral-950 py-5 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-500">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-neutral-300">CyberGuard</span>
-            <span>—</span>
-            <span>Digital Security & Legal Risk Platform</span>
-          </div>
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <div key={activeTab} className="page-enter">
+            {activeTab === 'dashboard' && (
+              <Dashboard
+                setActiveTab={setActiveTab}
+                onSelectScan={handleSelectScan}
+                lastScan={lastScan}
+                onReset={() => setLastScan(null)}
+              />
+            )}
+            {activeTab === 'tc' && (
+              <TCAnalyzer onScanCompleted={handleScanCompleted} />
+            )}
+            {activeTab === 'phishing' && (
+              <PhishingAnalyzer onScanCompleted={handleScanCompleted} />
+            )}
+            {activeTab === 'website' && (
+              <WebsiteChecker onScanCompleted={handleScanCompleted} />
+            )}
+            {activeTab === 'compliance' && (
+              <ComplianceChecker onScanCompleted={handleScanCompleted} />
+            )}
+            {activeTab === 'history' && (
+              <ScanHistory onSelectScan={handleSelectScan} />
+            )}
+            {activeTab === 'about' && <About setActiveTab={setActiveTab} />}
+            {activeTab === 'detail' && selectedScan && (
+              <ScanDetail
+                scan={selectedScan}
+                onBack={() => {
+                  setSelectedScan(null);
+                  setActiveTab('history');
+                }}
+              />
+            )}
+            </div>
+          </main>
 
-          <div className="flex items-center gap-3 text-[11px] text-neutral-400">
-            <span>FastAPI Backend</span>
-            <span>•</span>
-            <span>SQLite Storage</span>
-            <span>•</span>
-            <span>ReportLab PDF Engine</span>
-          </div>
+          <footer className="border-t border-slate-800/70 bg-slate-950/70 py-4 mt-auto">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
+              CyberGuard <span className="mx-1.5 text-slate-700">·</span> Digital security and privacy tools
+            </div>
+          </footer>
+
+          <ApiKeyModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
         </div>
-      </footer>
-
-      {/* AI Key / Engine Settings Modal */}
-      <ApiKeyModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-    </div>
+      )}
+    </GoogleOAuthProvider>
   );
 }
