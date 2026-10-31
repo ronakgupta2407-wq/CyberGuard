@@ -51,7 +51,7 @@
 | **Styling** | Tailwind CSS v4 | Cyberpunk dark theme with glowing badges |
 | **Backend** | Python 3.12 + FastAPI | High-performance asynchronous REST API |
 | **Data Validation** | Pydantic v2 | Strict schema validation |
-| **Database** | SQLite + SQLAlchemy 2.0 | Persistent scans, findings, and compliance matrix |
+| **Database** | SQLite locally; PostgreSQL in deployment + SQLAlchemy 2.0 | Persistent scans, findings, and compliance matrix |
 | **Document Processing** | `pypdf`, `python-docx` | Text extraction from PDF and Word documents |
 | **Website & Network** | `ssl`, `socket`, `httpx`, `ipaddress` | TLS validation, HTTP headers, SSRF prevention |
 | **Report Export** | ReportLab | Professional downloadable PDF reports |
@@ -98,6 +98,19 @@ npm install
 npm run dev
 ```
 Open your browser at `http://localhost:5173`.
+
+### 4. Deploy to Render and Vercel
+
+The repository includes a Render Blueprint at `render.yaml` for the FastAPI service and PostgreSQL database, and a Vercel rewrite at `frontend/vercel.json` that forwards `/api/*` requests to `https://cyberguard-api.onrender.com`.
+
+1. Push the repository to GitHub.
+2. In Render, choose **New → Blueprint**, select this repository, and apply `render.yaml`. The Blueprint creates `cyberguard-api` and `cyberguard-db`. Set `GROQ_API_KEY` in the Render dashboard; do not put API keys in Git.
+3. Wait for the Render service to deploy. Its service URL must remain `https://cyberguard-api.onrender.com` to match the Vercel rewrite.
+4. In Vercel, import the same GitHub repository and set **Root Directory** to `frontend`. Use the Vite defaults: build command `npm run build`, output directory `dist`. The checked-in `vercel.json` routes API requests to Render.
+5. Add the deployed Vercel domain to the Google OAuth client's **Authorized JavaScript origins**, then redeploy or refresh the Vercel deployment if its build settings change.
+6. Smoke-test the deployed site, Google sign-in, analysis endpoints, scan history, and PDF export.
+
+The included Render Blueprint uses free plans for a no-cost demo. Free services can sleep, and free PostgreSQL storage is temporary and subject to provider limits; do not use it for important production data. For production, select an always-on web-service plan and a paid PostgreSQL plan with backups/retention. Keep `DATABASE_URL` set from Render's database connection string and keep provider credentials in Render's environment settings.
 
 ---
 
