@@ -38,6 +38,7 @@
 6. **Reports, History & Comparison (Module 06)**
    - SQLite persistence of all past scans, metadata, and findings.
    - **Forensic PDF Export:** Professional multi-page PDF risk reports generated via **ReportLab**.
+   - **Plain-language summary:** Results, dashboard, and PDF reports show a concise risk overview plus prioritized findings with evidence, impact, and recommended actions.
    - **Side-by-Side Comparison:** Compare two scans side-by-side to track security progression, new risks, and resolved items.
 
 ---
@@ -82,6 +83,8 @@ pytest backend/tests -v
 python backend/run.py
 ```
 The backend API will be live at `http://localhost:8000`. Interactive OpenAPI documentation is available at `http://localhost:8000/docs`.
+
+Open the local app at `http://localhost:5173`. For deployment, serve the frontend over HTTPS.
 
 ### 3. Frontend Setup
 In a new terminal window:
